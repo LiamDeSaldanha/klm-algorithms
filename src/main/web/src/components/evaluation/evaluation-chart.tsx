@@ -175,8 +175,12 @@ export function EvaluationChart({
 
             <ChartTooltip
               cursor={false}
-              content={(props: CustomTooltipProps) => (
-                <ChartTooltipContent {...props} hideIndicator hideLabel />
+              content={(props) => (
+                <ChartTooltipContent
+                  {...(props as CustomTooltipProps)}
+                  hideIndicator
+                  hideLabel
+                />
               )}
             />
 
@@ -187,7 +191,7 @@ export function EvaluationChart({
                 dataKey={key}
                 stroke={chartConfig[key].color}
                 strokeWidth={2}
-                dot={({ cx, cy }) => {
+                dot={({ cx = 0, cy = 0 }) => {
                   const r = 12;
                   const AlgoIcon = algoIcons[key as Algorithm] ?? Circle;
                   return (
@@ -202,7 +206,7 @@ export function EvaluationChart({
                     />
                   );
                 }}
-                activeDot={({ cx, cy }) => {
+                activeDot={({ cx = 0, cy = 0 }) => {
                   const r = 16;
                   const AlgoIcon = algoIcons[key as Algorithm] ?? Circle;
                   return (

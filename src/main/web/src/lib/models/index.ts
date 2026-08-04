@@ -574,7 +574,13 @@ class ErrorModel extends Error {
     this._code = code;
     this._description = description;
     this._message = message;
-    Error.captureStackTrace(this, this.constructor); // Capture stack trace
+    // Capture stack trace (V8-only API, not in the standard lib typings)
+    const captureStackTrace = (Error as unknown as {
+      captureStackTrace?: (targetObject: object, constructorOpt?: unknown) => void;
+    }).captureStackTrace;
+    if (typeof captureStackTrace === "function") {
+      captureStackTrace(this, this.constructor);
+    }
   }
 
   public get code(): number {
