@@ -250,7 +250,7 @@ function RelevancePartitionCheck({
 
 
 function LexicographicPowersetCheck({
-  entailment: { powersetRanking, negation, queryFormula, consistentRank },
+  entailment: { type, powersetRanking, negation, queryFormula, consistentRank },
 }: EntailmentCheckProps) {
 
   return (
@@ -259,7 +259,12 @@ function LexicographicPowersetCheck({
         <ul className="list-disc list-inside">
           <li> Subsets, <Formula formula="\mathcal{S}_{i}" />, are ordered first by descending cardinality, with elements inside each subset arranged by decreasing rank. </li>
           <li> Subsets of equal size are then compared lexicographically by their rank sequences, yielding a precise and deterministic ordering. </li>
-          <li> Note that since all the statements  assigned to <Formula formula="\mathcal{R}_{\infty}" /> are never discarded, they are included in all subsets <Formula formula="\mathcal{S}_{1}" /> to <Formula formula={`\\mathcal{S}_{${powersetRanking.length}}`} /> respectively. </li>
+
+             {type == EntailmentType.LexicographicClosure  ? (
+          <li> Note that since all the statements assigned to <Formula formula="\mathcal{R}_{\infty}" /> are never discarded, they are included in all subsets <Formula formula="\mathcal{S}_{1}" /> to <Formula formula={`\\mathcal{S}_{${powersetRanking.length}}`} /> respectively. </li>
+          ) : (
+              <li> Note that since all the statements assigned to <Formula formula="\mathcal{R}_{\infty}" /> and the irrelevant set, <Formula formula="\mathcal{R}^{-}" />, are never discarded, they are included in all subsets <Formula formula="\mathcal{S}_{1}" /> to <Formula formula={`\\mathcal{S}_{${powersetRanking.length}}`} /> respectively. </li>
+          )}
         </ul>
       </p>
       <RankingTableWithout
