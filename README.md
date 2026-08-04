@@ -2,6 +2,8 @@
 
 This repository contains software developed as part of the dissertation '<i><strong>Implementation and Evaluation of KLM-Style Defeasible Entailment and Explanation Algorithms</strong></i>', submitted in fulfilment of the requirements for the degree of Master of Science in the Department of Computer Science, Faculty of Science, University of Cape Town.
 
+<strong>A Masters Degree in Computer Science with Distinction was awarded by the University of Cape Town for the Dissertation that produced this work.</strong> 
+
 ### Table of Contents
 1. [About the Tool](#about) 
 2. [Requirements](#req)
@@ -23,8 +25,6 @@ The system provides a unified environment for:
 In addition to operator-specific justification procedures, the tool includes a <strong>universal justification algorithm</strong> that extracts all justifications from any deciding knowledge base, regardless of the inference operator that generated it.
 
 Designed for both researchers and practitioners, KLM-Algorithms supports reproducible experimentation, scalable testing on synthetic and benchmark datasets, and visual exploration of entailments and explanations. It aims to provide a practical, extensible platform for studying defeasible reasoning, evaluating reasoning algorithms, and developing explainable AI systems grounded in formal logic.
-
-<strong>A Masters Degree in Computer Science with Distinction was awarded by the University of Cape Town for the Dissertation that produced this work.</strong> 
 
 <a name="req"></a>
 ## 2. Requirements

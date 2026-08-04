@@ -226,8 +226,26 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
             _logger.debug(String.format("-> Entailment:NO : %s does not entail %s", materialisedKb, queryFormula));
         }
 
-        ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, powersets, false);
+        ArrayList<ModelRankResponse> powersetRanking1 = ReasonerUtils.toResponseRanks(baseRank, powersets, false);
        // ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, irrelevantRanking, powersets);
+
+        ArrayList<ModelRankResponse> powersetRanking = new ArrayList<>();
+    
+        for (var k : powersetRanking1) {         
+            boolean addSet = true;
+
+            for (PlFormula formula : irrelevantRanking.getKnowledgeBase()) {              
+                if (!k.formulas() .contains(formula.toString())) {
+                    addSet = false;
+                }
+            }
+
+            if(addSet)
+            {
+                powersetRanking.add(k);
+            }
+          
+        }
 
         _logger.debug(String.format("-> Powerset Ranking"));
         for (var k : powersetRanking) {

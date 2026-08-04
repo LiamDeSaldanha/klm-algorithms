@@ -841,9 +841,7 @@ public final class ReasonerUtils {
         for (KnowledgeBase powerKb : powersets) {
 
             var rankKb = new KnowledgeBase();
-            if(addInfinityRank) {
-                rankKb.addKnowledgeBase(infinityKb);
-            }
+            rankKb.addKnowledgeBase(infinityKb);
             rankKb.addKnowledgeBase(powerKb);
 
             powersetRanking.add(toResponseKnowledgebase(baseRank, rankKb, counter));
