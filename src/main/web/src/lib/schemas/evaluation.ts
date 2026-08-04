@@ -84,10 +84,7 @@ const EvaluationFormSchema = z
     if (parameters.numberOfDefeasibleImplications < parameters.numberOfRanks) {
       ctx.addIssue({
         path: ["parameters", "numberOfDefeasibleImplications"],
-        code: z.ZodIssueCode.too_small,
-        minimum: parameters.numberOfRanks,
-        type: "number",
-        inclusive: true,
+        code: "custom",
         message: EvaluationConstants.NUMBER_OF_DI_MIN_MESSAGE(
           parameters.numberOfRanks
         ),

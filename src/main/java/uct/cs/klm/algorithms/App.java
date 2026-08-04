@@ -29,36 +29,36 @@ public class App {
       config.staticFiles.add("/web");
       // config.staticFiles.add("/"); // Other static assets, external to the ReactJS
       config.spaRoot.addFile("/", "/web/index.html"); // Catch-all route for the single-page application
+
+      // In Javalin 7 routing and lifecycle handlers are configured upfront in the config block.
+      config.routes.before(ctx -> ctx.header("Access-Control-Allow-Credentials", "true"));
+
+      // query
+      config.routes.get("/api/queries/get-formula", FormulaController::getQueryFormula);
+      config.routes.post("/api/queries/create-formula/{queryFormula}", FormulaController::createQueryFormula);
+
+      // knowledge-base
+      config.routes.get("/api/knowledge-base/get-default", KnowledgeBaseController::getDefaultKnowledgeBase);
+      config.routes.post("/api/knowledge-base/generate", KnowledgeBaseController::generateKnowledgeBase);
+      config.routes.post("/api/knowledge-base/get-signature", KnowledgeBaseController::getKnowledgeBaseSignature);
+      config.routes.post("/api/knowledge-base/create-from-input", KnowledgeBaseController::createInputKnowledgeBase);
+      config.routes.post("/api/knowledge-base/create-from-file", KnowledgeBaseController::createFileKnowledgeBase);
+
+      // base-rank
+      config.routes.post("/api/base-rank", BaseRankController::getBaseRank);
+      config.routes.post("/api/base-rank-explanation", BaseRankController::generateBaseRankExplanation);
+
+      // entailment
+      config.routes.post("/api/entailment/{reasoner}/{queryFormula}", ReasonerController::getEntailment);
+
+      // explanation
+      config.routes.post("/api/explanation/{reasoner}", ReasonerController::getExplanation);
+
+      // Evaluation
+      config.routes.post("/api/evaluation", EvaluationController::getEvaluation);
+      config.routes.post("/api/evaluation/import", EvaluationController::importEvaluation);
+      config.routes.post("/api/evaluation/export", EvaluationController::exportEvaluation);
     });
     app.start(8080);
-
-    // app before
-    app.before(ctx -> ctx.header("Access-Control-Allow-Credentials", "true"));
-
-    // query    
-    app.get("/api/queries/get-formula", FormulaController::getQueryFormula);    
-    app.post("/api/queries/create-formula/{queryFormula}", FormulaController::createQueryFormula);
-    
-     // knowledge-base    
-    app.get("/api/knowledge-base/get-default", KnowledgeBaseController::getDefaultKnowledgeBase);
-    app.post("/api/knowledge-base/generate", KnowledgeBaseController::generateKnowledgeBase);
-    app.post("/api/knowledge-base/get-signature", KnowledgeBaseController::getKnowledgeBaseSignature);
-    app.post("/api/knowledge-base/create-from-input", KnowledgeBaseController::createInputKnowledgeBase);
-    app.post("/api/knowledge-base/create-from-file", KnowledgeBaseController::createFileKnowledgeBase);
-    
-    // base-rank    
-    app.post("/api/base-rank", BaseRankController::getBaseRank);
-    app.post("/api/base-rank-explanation", BaseRankController::generateBaseRankExplanation);
-
-    // entailment 
-    app.post("/api/entailment/{reasoner}/{queryFormula}", ReasonerController::getEntailment);
-    
-    // explanation 
-    app.post("/api/explanation/{reasoner}", ReasonerController::getExplanation);
-
-    // Evaluation
-    app.post("/api/evaluation", EvaluationController::getEvaluation);
-    app.post("/api/evaluation/import", EvaluationController::importEvaluation);
-    app.post("/api/evaluation/export", EvaluationController::exportEvaluation);
   }
 }

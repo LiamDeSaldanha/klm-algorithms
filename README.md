@@ -24,6 +24,8 @@ In addition to operator-specific justification procedures, the tool includes a <
 
 Designed for both researchers and practitioners, KLM-Algorithms supports reproducible experimentation, scalable testing on synthetic and benchmark datasets, and visual exploration of entailments and explanations. It aims to provide a practical, extensible platform for studying defeasible reasoning, evaluating reasoning algorithms, and developing explainable AI systems grounded in formal logic.
 
+<strong>A Masters Degree in Computer Science with Distinction was awarded by the University of Cape Town for the Dissertation that produced on work.</strong> 
+
 <a name="req"></a>
 ## 2. Requirements
 - Maven 4.0+

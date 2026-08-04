@@ -45,10 +45,7 @@ const formSchema = z
     if (numberOfDefeasibleImplications < numberOfRanks) {
       ctx.addIssue({
         path: ["numberOfDefeasibleImplications"],
-        code: z.ZodIssueCode.too_small,
-        minimum: numberOfRanks,
-        type: "number",
-        inclusive: true,
+        code: "custom",
         message: `Must be at least the number of ranks (${numberOfRanks})`,
       });
     }
