@@ -111,24 +111,21 @@ public class LexicographicClosureReasonerImpl extends KlmReasonerBase implements
             if (isNegationEntailed) {
                 DisplayUtils.LogDebug(_logger, String.format("=> YES - NegationOfAntecedent:Entailed; We skip and move next subset: %s := %s", consistentRank, powerKb));
             } else {
+                  continueProcessing = false;
                 _logger.debug("  NOT - NegationOfAntecedent:Entailed; We checking if materialisedKB entails query");
-                isQueryEntailed = _reasoner.query(materialisedKb, materialisedQueryFormula);
-                if (isQueryEntailed) {
-                    continueProcessing = false;
-                } else {
-                    if (nonEntailmentRank == -1) {
-                        nonEntailmentRank = consistentRank;
-                    }
-                    _logger.debug("  But the query is not entailed by the remaining statements");
-                }
+                isQueryEntailed = _reasoner.query(materialisedKb, materialisedQueryFormula);                
+            }
+
+             if (!continueProcessing) {
+                break;
             }
 
             DisplayUtils.LogDebug(_logger, String.format(""));
         }
 
         if (nonEntailmentRank != -1 && !isQueryEntailed) {
-            consistentRank = nonEntailmentRank;
-        }
+           consistentRank = nonEntailmentRank;
+       }
 
         return CreateResponse(
                 baseRank,
@@ -170,11 +167,7 @@ public class LexicographicClosureReasonerImpl extends KlmReasonerBase implements
                 DisplayUtils.LogDebug(_logger, String.format("=> Yes, Infinity KB: %s entails %s", materialisedKb, queryFormula));   
                 DisplayUtils.LogDebug(_logger, String.format("=> RemainingRanking := %s", remainingRanking.getKnowledgeBase()));
                 DisplayUtils.LogDebug(_logger, String.format("=> RemovedRanking := %s", removedRanking.getKnowledgeBase()));
-            } else {
-                if (consistentRank == powersets.size()) {
-                    consistentRank = 0;
-                }
-            }
+            } 
         }
 
         if (isQueryEntailed) {
@@ -183,7 +176,7 @@ public class LexicographicClosureReasonerImpl extends KlmReasonerBase implements
             _logger.debug(String.format("-> Entailment:NO : %s does not entail %s", materialisedKb, queryFormula));
         }
 
-        ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, powersets);
+        ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, powersets, true);
 
         var finalTime = ReasonerUtils.ToTimeDifference(startTime, System.nanoTime());
 

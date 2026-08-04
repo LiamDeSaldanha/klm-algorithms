@@ -106,14 +106,9 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
         if (isNegationEntailed) {
             DisplayUtils.LogDebug(_logger, String.format("=> YES - NegationOfAntecedent:Entailed; We skip and consider the relevant subsets"));
         } else {
+             continueProcessing = false;
             _logger.debug("  NOT - NegationOfAntecedent:Entailed; We checking if materialisedKB entails query");
             isQueryEntailed = _reasoner.query(materialisedKb, materialisedQueryFormula);
-
-            if (isQueryEntailed) {
-                continueProcessing = false;
-            } else {
-                _logger.debug("  But the query is not entailed by the remaining statements");
-            }
         }
 
         if (!continueProcessing) {
@@ -153,6 +148,7 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
             if (isNegationEntailed) {
                 DisplayUtils.LogDebug(_logger, String.format("=> YES - NegationOfAntecedent:Entailed; We skip and move next subset: %s := %s", consistentRank, powerKb));
             } else {
+                   continueProcessing = false;
                 _logger.debug("  NOT - NegationOfAntecedent:Entailed; We checking if materialisedKB entails query");
                 isQueryEntailed = _reasoner.query(materialisedKb, materialisedQueryFormula);
                 if (isQueryEntailed) {
@@ -160,6 +156,10 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
                 } else {
                     _logger.debug("  But the query is not entailed by the remaining statements");
                 }
+            }
+
+             if (!continueProcessing) {
+                break;
             }
 
             DisplayUtils.LogDebug(_logger, String.format(""));
@@ -217,11 +217,7 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
                 DisplayUtils.LogDebug(_logger, String.format("=> Yes, Infinity KB: %s entails %s", materialisedKb, queryFormula));
                 DisplayUtils.LogDebug(_logger, String.format("=> RemainingRanking := %s", remainingRanking.getKnowledgeBase()));
                 DisplayUtils.LogDebug(_logger, String.format("=> RemovedRanking := %s", removedRanking.getKnowledgeBase()));
-            } else {
-                if (consistentRank == powersets.size()) {
-                    consistentRank = 0;
-                }
-            }
+            } 
         }
 
         if (isQueryEntailed) {
@@ -230,7 +226,7 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
             _logger.debug(String.format("-> Entailment:NO : %s does not entail %s", materialisedKb, queryFormula));
         }
 
-        ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, powersets);
+        ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, powersets, false);
        // ArrayList<ModelRankResponse> powersetRanking = ReasonerUtils.toResponseRanks(baseRank, irrelevantRanking, powersets);
 
         _logger.debug(String.format("-> Powerset Ranking"));

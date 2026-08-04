@@ -17,7 +17,7 @@ function Footer({ className }: FooterProps) {
       >
         <img src={github} alt="GitHub logo" className="w-6 mr-2" />
         <span>
-          KLM-Style Entailment and Explanation Algorithms v4.6
+          KLM-Style Entailment and Explanation Algorithms v3.8.2
         </span>
       </a>
     </footer>

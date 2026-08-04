@@ -416,10 +416,10 @@ public final class ReasonerUtils {
         }
 
         int counter = 0;
-        System.out.println();
-        System.out.println(String.format("Mini SubRanks for rank = %s:%s", rank.getRankNumber(), rank.getFormulas()));
+                  DisplayUtils.LogDebug(_logger,"");
+         DisplayUtils.LogDebug(_logger,String.format("Mini SubRanks for rank = %s:%s", rank.getRankNumber(), rank.getFormulas()));
         for (ModelRank input : modelRankings) {
-            System.out.println(String.format("%s : %s", counter, input.getFormulas()));
+             DisplayUtils.LogDebug(_logger,String.format("%s : %s", counter, input.getFormulas()));
             counter++;
         }
 
@@ -596,7 +596,103 @@ public final class ReasonerUtils {
         return result;
     }
 
-    public static List<KnowledgeBase> toPowerSetOrdered(ModelRankCollection rankCollection) {
+      public static List<KnowledgeBase> toPowerSetOrdered(ModelRankCollection rankCollection) {
+
+        // Sort ranks in ascending order (lowest rank number first).
+        rankCollection.sort(Comparator.comparingInt(ModelRank::getRankNumber));
+
+         DisplayUtils.LogDebug(_logger,"");
+         DisplayUtils.LogDebug(_logger,String.format("=>Powersets of %s", rankCollection.getKnowledgeBase()));
+
+        // Order the ranks from the highest rank number (most preferred) down to
+        // the lowest. Higher ranked statements take precedence: a lower ranked
+        // statement may never appear unless every higher rank is present in full.
+        List<ModelRank> ranksHighToLow = new ArrayList<>(rankCollection);
+        ranksHighToLow.sort(Comparator.comparingInt(ModelRank::getRankNumber).reversed());
+
+        for (ModelRank rank : ranksHighToLow) {
+             DisplayUtils.LogDebug(_logger,String.format("=>Powersets of Rank_%s = %s",
+                    rank.getRankNumber(), rank.getFormulas()));
+        }
+
+        // A power set may only contain a statement from rank k if EVERY rank
+        // higher than k is included in full. So we pivot on each rank k:
+        //   - always include all statements from ranks strictly higher than k,
+        //   - then append every subset of rank k's own statements.
+        // Ranks lower than k contribute nothing. Duplicates are removed.
+        List<List<PlFormula>> orderedSubsets = new ArrayList<>();
+
+        for (int pivot = 0; pivot < ranksHighToLow.size(); pivot++) {
+
+            ModelRank pivotRank = ranksHighToLow.get(pivot);
+
+            // All statements from ranks strictly higher than the pivot rank.
+            List<PlFormula> higherFormulas = new ArrayList<>();
+            for (int higher = 0; higher < pivot; higher++) {
+                for (PlFormula formula : ranksHighToLow.get(higher).getFormulas()) {
+                    higherFormulas.add(formula);
+                }
+            }
+
+            // Every subset of the pivot rank's own statements.
+            List<PlFormula> pivotFormulas = toFormulaList(pivotRank);
+            int n = pivotFormulas.size();
+            int totalSubsets = 1 << n;
+
+             DisplayUtils.LogDebug(_logger,String.format(
+                    "=>Powersets of pivot Rank_%s => fixed higher ranks: %s, subsets of: %s",
+                    pivotRank.getRankNumber(), higherFormulas, pivotFormulas));
+
+            for (int mask = 0; mask < totalSubsets; mask++) {
+
+                List<PlFormula> candidate = new ArrayList<>(higherFormulas);
+                for (int j = 0; j < n; j++) {
+                    // Include the jth pivot statement when its bit is set.
+                    if ((mask & (1 << j)) != 0) {
+                        candidate.add(pivotFormulas.get(j));
+                    }
+                }
+
+                if (candidate.isEmpty()) {
+                    continue;
+                }
+
+                // Skip sets already produced (same statements, order ignored).
+                boolean exists = orderedSubsets.stream()
+                        .anyMatch(existing -> existing.size() == candidate.size()
+                                && new HashSet<>(existing).equals(new HashSet<>(candidate)));
+                if (exists) {
+                    continue;
+                }
+
+                orderedSubsets.add(candidate);
+                  DisplayUtils.LogDebug(_logger,String.format("=>Powersets of candidate := %s", candidate));
+            }
+        }
+
+        // Largest (least weakened) set first, smallest last.
+        orderedSubsets.sort(Comparator.comparingInt((List<PlFormula> subset) -> subset.size()).reversed());
+
+        List<KnowledgeBase> finalKb = new ArrayList<>();
+        for (List<PlFormula> subset : orderedSubsets) {
+            KnowledgeBase kb = new KnowledgeBase();
+            for (PlFormula formula : subset) {
+                kb.add(formula);
+            }
+            finalKb.add(kb);
+        }
+
+        // Label largest set as Set_(n-1) down to Set_0, matching the ranking flow.
+        int label = finalKb.size() - 1;
+        for (KnowledgeBase kb : finalKb) {
+             DisplayUtils.LogDebug(_logger,String.format("=>Powersets of Set_%s = %s", label, kb));
+            label--;
+        }
+
+        return finalKb;
+    }
+
+    public static List<KnowledgeBase> toPowerSetOrdered2(ModelRankCollection rankCollection) {
 
         rankCollection.sort(Comparator.comparingInt(ModelRank::getRankNumber));
 
@@ -718,7 +814,7 @@ public final class ReasonerUtils {
         return resultRank;
     }
 
-    public static ArrayList<ModelRankResponse> toResponseRanks(ModelBaseRank baseRank, ModelRankCollection irrelevantRanking, List<KnowledgeBase> powersets) {
+    public static ArrayList<ModelRankResponse> toResponseRanks(ModelBaseRank baseRank, ModelRankCollection irrelevantRanking, List<KnowledgeBase> powersets, boolean addInfinityRank) {
 
         List<KnowledgeBase> powerResult = new ArrayList<>();
 
@@ -732,10 +828,10 @@ public final class ReasonerUtils {
             powerResult.add(kb);
         }
 
-        return toResponseRanks(baseRank, powerResult);
+        return toResponseRanks(baseRank, powerResult, addInfinityRank);
     }
 
-    public static ArrayList<ModelRankResponse> toResponseRanks(ModelBaseRank baseRank, List<KnowledgeBase> powersets) {
+    public static ArrayList<ModelRankResponse> toResponseRanks(ModelBaseRank baseRank, List<KnowledgeBase> powersets, boolean addInfinityRank) {
 
         ArrayList<ModelRankResponse> powersetRanking = new ArrayList<>();
 
@@ -745,7 +841,9 @@ public final class ReasonerUtils {
         for (KnowledgeBase powerKb : powersets) {
 
             var rankKb = new KnowledgeBase();
-            rankKb.addKnowledgeBase(infinityKb);
+            if(addInfinityRank) {
+                rankKb.addKnowledgeBase(infinityKb);
+            }
             rankKb.addKnowledgeBase(powerKb);
 
             powersetRanking.add(toResponseKnowledgebase(baseRank, rankKb, counter));
