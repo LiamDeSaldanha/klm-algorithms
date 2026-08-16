@@ -62,18 +62,13 @@ export function RelevantClosureStages({
       </CardHeader>
       <CardContent className="min-h-[22rem] p-4 pt-0 text-center">
        {entailment && currentStage === "partition" && (
-                <div className="mx-auto mb-3 max-w-2xl space-y-1 text-xs ">
+                <div className="mx-auto mb-3 space-y-1 text-ms ">
                 <p>
-                                 Relevant Closure splits a defeasible knowledge base into relevant and irrelevant statements
-                                 in relation to the query. The relevant partition is the union of all justifications; the
+                                 Relevant Closure requires a split defeasible knowledge base consisting of a relevant and irrelevant partition
+                                 in relation to the query. The relevant partition is the union of all justifications and the
                                  irrelevant partition is everything else. A justification is the smallest subset where the
                                  antecedent of the query is exceptional:</p>
-                                 <Formula formula={`\\text{Given knwoledge base }\\mathcal{K} \\text{ and a propositional statement } \\alpha\\text{. Let }\\mathcal{J}\\subset\\mathcal{K}`} />
-                                 <Formula formula={`\\mathcal{J}\\text{ is a }\\alpha \\text{ justification wrt }\\mathcal{K}\\text{ if }\\alpha \\text{ is exceptional in } \\mathcal{J} \\text{ and for any } \\mathcal{J}'\\subset \\mathcal{J} \\text{ }\\alpha \\text{ is not exceptional}`} />
 
-                                 <p>For basic relevant closure the partition is defined mathematically as:
-                                 </p>
-                                 <Formula formula={`\\mathcal{J}^{\\mathcal{K}}_{\\text{basic}}(\\alpha) = \\{\\mathcal{J} | \\mathcal{J} \\text{ is an }\\alpha \\text{ justification w.r.t }\\mathcal{K}\\}`} />
 
                 </div>
 

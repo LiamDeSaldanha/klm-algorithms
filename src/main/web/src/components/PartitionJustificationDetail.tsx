@@ -45,28 +45,23 @@ function JustificationExplanation({
       {!step.entailed && (
         <p>
           Since <Formula formula={"\\mathcal{D} \\not\\models \\lnot " + antecedent} />
-          , this candidate is <strong>not</strong> a justification — it isn't
-          even inconsistent with the antecedent, so it can't be responsible
-          for the entailment.
+          , this candidate is <strong>not</strong> a justification.
         </p>
       )}
 
       {step.entailed && step.isMinimal && (
         <p>
           Since <Formula formula={"\\mathcal{D} \\models \\lnot " + antecedent} /> and
-          no previously found justification is a subset of this candidate,
-          this is a <strong>minimal</strong> entailing subset — it is added
-          as a new justification.
+          there is no possible subset of this candidate set where the antecendent is exceptional.
+          This <strong>is</strong> a justification.
         </p>
       )}
 
       {step.entailed && !step.isMinimal && (
         <p>
-          Although <Formula formula={"\\mathcal{D} \\models \\lnot " + antecedent} />
-          , this candidate contains an already-found justification as a
-          subset. It is therefore <strong>not minimal</strong>: the smaller
-          justification alone is already sufficient, so this larger set is
-          redundant and isn't itself counted as a justification.
+          <strong>Although</strong> <Formula formula={"\\mathcal{D} \\models \\lnot " + antecedent} />
+          , there exists a subset of this candidate set where the antecedent is exceptional therefore, this candidate set
+          is <strong>not</strong> a justification.
         </p>
       )}
 
@@ -103,28 +98,55 @@ export function PartitionJustificationDetail({
     return <NoResults />;
   }
 
-  const step = steps[stepIndex];
-  const total = steps.length;
+
+
+  const total = steps.length+1;
+  const getStep = (index: number) => {
+      const clamped = Math.min(Math.max(index, 0), total - 1);
+      // clamped can be steps.length (the extra virtual step) — return undefined for that
+      return steps[clamped];
+    };
+  const step = getStep(stepIndex);
+  // queryFormula comes back parenthesised, e.g. "(p~>f)" — strip the
+  // parens before splitting on "~>" (same approach as EntailmentModelBase's
+  // own `antecedent` getter in lib/models/index.ts), otherwise this ends up
+  // as "(p" instead of "p".
   const antecedent =
-    reasoner.queryInput?.queryFormula?.split("~>")[0]?.trim() || "";
+    reasoner.queryInput?.queryFormula
+      ?.replaceAll("(", "")
+      .replaceAll(")", "")
+      .split("~>")[0]
+      ?.trim() || "";
 
   const goNext = () => setStepIndex((s) => Math.min(s + 1, total - 1));
   const goPrev = () => setStepIndex((s) => Math.max(s - 1, 0));
+  const goToStep = (index: number) => {
+    setStepIndex(Math.min(Math.max(index, 0), total - 1));
+  };
+
   const goUp = () => navigate(`/entailment/${algorithm}/partition`);
 
   return (
     <Card className="w-full">
       <CardHeader className="space-y-0.5 p-4 pb-2">
         <CardTitle className="text-center text-xl font-bold">Partition</CardTitle>
-        <p className="text-center text-xs text-muted-foreground">
-          Candidate {step.candidateNumber} / {total}
-        </p>
-        <p className="text-center text-xs text-muted-foreground">
-        We will iterate all combinations of the defeasible knowledge base to find the justifications w.r.t to the query
+        {stepIndex !== total-1?(<p className="text-center text-xs ">
+          Candidate { step.candidateNumber} / {total}
+        </p>):(
+
+            <p className="text-center text-xs ">
+            Creating the relevant partition
+            </p>)
+
+        }
+        <p className="text-center text-xs ">
+        We will iterate all combinations of the defeasible knowledge base to find justifications w.r.t to the query. Using these justifications
+        we can construct the relevant partition.
         </p>
 
       </CardHeader>
-      <CardContent className="p-4 pt-0">
+
+      {stepIndex !== total-1?(<CardContent className="p-4 pt-0">
         <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-2">
           <div className="flex flex-col gap-3">
             <BlankCard title="Justifications Found" showToggle={false}>
@@ -189,11 +211,58 @@ export function PartitionJustificationDetail({
 
           <BlankCard title="Explanation" showToggle={false}>
             <div className="min-h-56">
+
               <JustificationExplanation step={step} antecedent={antecedent} />
+
+
             </div>
           </BlankCard>
         </div>
-      </CardContent>
+      </CardContent>):
+      (
+          <CardContent className="p-4 pt-0">
+                  <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-2">
+                    <div className="flex flex-col gap-3">
+                      <BlankCard title="Relevant Partition" showToggle={false}>
+                        <div className="min-h-32 text-left">
+                          {getStep(stepIndex-1).justificationsSoFar.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              No justifications found yet.
+                            </p>
+                          ) : (
+                            <ol className="space-y-1 text-left text-xs">
+                              {getStep(stepIndex-1).justificationsSoFar.map((just, idx) => (
+                                <li key={idx} className="rounded-lg border border-border p-1.5">
+                                  <Kb formulas={just} name={`\\mathcal{J}_{${idx + 1}}`} set />
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      </BlankCard>
+
+
+                    </div>
+
+                    <BlankCard title="Explanation" showToggle={false}>
+                      <div className="min-h-56">
+
+                        <div className="space-y-1.5 text-left text-xs">
+                              <p>
+                                After traversing all the subsets of our defeasible knowledge base we create the relevant partition.
+                                This involves simply taking the union of all the justifications we have found. To create the irrelevant partition
+                                we take all the defeasible statements not in the relevant partition but are in the defeasible knowledge base.
+                    </p>
+
+                            </div>
+
+
+                      </div>
+                    </BlankCard>
+                  </div>
+                </CardContent>
+          )
+      }
       <CardFooter className="flex items-center justify-center gap-4 p-3 pt-0">
         <Button
           variant="outline"
@@ -211,6 +280,7 @@ export function PartitionJustificationDetail({
           variant="outline"
           size="icon"
           onClick={goNext}
+
           disabled={stepIndex === total - 1}
           aria-label="Next candidate"
         >
