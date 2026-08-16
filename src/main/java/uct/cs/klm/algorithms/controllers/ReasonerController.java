@@ -5,6 +5,8 @@ import uct.cs.klm.algorithms.rational.ModelRationalClosureEntailment;
 import uct.cs.klm.algorithms.rational.RationalClosureExplanationService;
 import uct.cs.klm.algorithms.relevant.MinimalRelevantClosureExplanationService;
 import uct.cs.klm.algorithms.relevant.BasicRelevantClosureExplanationService;
+import uct.cs.klm.algorithms.relevant.BasicRelevantReasonerImpl;
+import uct.cs.klm.algorithms.relevant.ModelRelevant;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,4 +121,69 @@ public class ReasonerController {
             context.json(new ModelErrorResponse(400, "Bad Request", "Invalid reasoner: " + reasonerType));
         }
     }
+
+    public static void getBasicRelevantJson(Context context) {
+
+
+
+        try {
+            RelevantJsonRequest req = context.bodyAsClass(RelevantJsonRequest.class);
+
+            BasicRelevantReasonerImpl reasoner = new BasicRelevantReasonerImpl();
+            ModelRelevant result = reasoner.getBasicRelevantJson(
+                    req.knowledgeBase(),
+                    req.query(),
+                    req.relevant(),
+                    req.irrelevant());
+
+            context.status(200);
+            context.json(result);
+
+        } catch (Exception e) {
+
+            System.out.println(String.format("An error occured: %s", e));
+            e.printStackTrace();
+
+            context.status(400);
+            context.json(new ModelErrorResponse(400, "Bad Request", "Invalid relevant closure trace payload"));
+        }
+    }
+
+    public static void getDetailedRelevantJson(Context context) {
+
+        System.out.println("[DEBUG] POST /api/relevant/basic/trace/detailed — request received");
+
+        try {
+            RelevantJsonRequest req = context.bodyAsClass(RelevantJsonRequest.class);
+
+            System.out.println("[DEBUG]   knowledgeBase = " + req.knowledgeBase());
+            System.out.println("[DEBUG]   query         = " + req.query());
+            System.out.println("[DEBUG]   relevant      = " + req.relevant());
+            System.out.println("[DEBUG]   irrelevant    = " + req.irrelevant());
+
+            BasicRelevantReasonerImpl reasoner = new BasicRelevantReasonerImpl();
+            ModelRelevant result = reasoner.getDetailedRelevantJson(
+                    req.knowledgeBase(),
+                    req.query(),
+                    req.relevant(),
+                    req.irrelevant());
+
+            System.out.println(
+                    "[DEBUG]   trace built, " + result.getSteps().size() + " step(s) — sending 200 response");
+
+            context.status(200);
+            context.json(result);
+
+        } catch (Exception e) {
+
+            System.out.println(String.format("[DEBUG] getDetailedRelevantJson error: %s", e));
+            e.printStackTrace();
+
+            context.status(400);
+            context.json(new ModelErrorResponse(400, "Bad Request", "Invalid relevant closure detailed trace payload"));
+        }
+    }
+
+
 }
+

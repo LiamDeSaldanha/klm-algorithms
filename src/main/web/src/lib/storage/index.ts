@@ -8,8 +8,9 @@ import {
   MinimalRelevantEntailmentModel,
   BasicRelevantEntailmentModel,
 } from "@/lib/models";
-import { BaseRankTraceStep } from "@/lib/mock/base-rank-trace";
-import { JustificationTraceStep } from "@/lib/mock/justification-trace";
+import { BaseRankTraceStep } from "@/lib/base-rank-trace";
+import { JustificationTraceStep } from "@/lib/justification-trace";
+import { RelevantClosureTraceStep } from "@/lib/relevant-closure-trace";
 
 export type QueryInput = {
   queryFormula: string;
@@ -47,6 +48,8 @@ export interface IEntailementQueryResult {
   lexicalEntailment: LexicalEntailmentModel | null;
   basicRelevantEntailment: BasicRelevantEntailmentModel | null;
   minimalRelevantEntailment: MinimalRelevantEntailmentModel | null;
+  basicRelevantClosureTrace: RelevantClosureTraceStep[] | null;
+  minimalRelevantClosureTrace: RelevantClosureTraceStep[] | null;
 }
 
 export function getEntailmentQueryResult(): IEntailementQueryResult | null {
@@ -78,6 +81,8 @@ export function getEntailmentQueryResult(): IEntailementQueryResult | null {
         obj.minimalRelevantEntailment != null
           ? MinimalRelevantEntailmentModel.create(obj.minimalRelevantEntailment)
           : null,
+      basicRelevantClosureTrace: obj.basicRelevantClosureTrace ?? null,
+      minimalRelevantClosureTrace: obj.minimalRelevantClosureTrace ?? null,
     };
   }
   return null;
@@ -101,6 +106,8 @@ export function saveEntailmentQueryResult(data: IEntailementQueryResult): void {
       lexicalEntailment: data.lexicalEntailment?.toObject(),
       basicRelevantEntailment: data.basicRelevantEntailment?.toObject(),
       minimalRelevantEntailment: data.minimalRelevantEntailment?.toObject(),
+      basicRelevantClosureTrace: data.basicRelevantClosureTrace,
+      minimalRelevantClosureTrace: data.minimalRelevantClosureTrace,
     })
   );
 }

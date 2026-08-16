@@ -1,4 +1,27 @@
-import type { BaseRankTraceRow, BaseRankTraceStep } from "@/lib/mock/base-rank-trace";
+/**
+ * Row/step shapes the BaseRank stepper UI (BaseRankAlgorithmDetail.tsx)
+ * renders — a cumulative i / E_i / E_i+1 / R_i table, built up one pseudocode
+ * line at a time by buildBaseRankTraceFromApi below.
+ */
+export interface BaseRankTraceRow {
+  i: number;
+  ei: string[];
+  eiPrev: string[] | null;
+  eiNext: string[] | null;
+  ri: string[] | null;
+}
+
+export interface BaseRankTraceStep {
+  /** Value of i currently "in scope" for this step. */
+  i: number;
+  /** Index into CODE_LINES (see BaseRankAlgorithmDetail) that should be highlighted. */
+  lineIndex: number;
+  /** Short human-readable description of what's happening at this step. */
+  note: string;
+  /** Cumulative table snapshot at this point in the trace. */
+  rows: BaseRankTraceRow[];
+  terminated?: boolean;
+}
 
 /**
  * Shape returned by POST /api/base-rank/trace — one entry per pseudocode
@@ -40,16 +63,25 @@ function noteFor(lineIndex: number, i: number): string {
 
 /**
  * Converts the flat, one-row-per-pseudocode-line API response into the
- * cumulative BaseRankTraceStep[] shape the BaseRank stepper UI already
- * renders (same shape the mock trace produces — see
- * BaseRankAlgorithmDetail.tsx, and the deprecated DeprecatedBaseRankDebugger.tsx),
- * so the UI doesn't need to change — only its data source does.
+ * cumulative BaseRankTraceStep[] shape the BaseRank stepper UI
+ * (BaseRankAlgorithmDetail.tsx) renders.
  *
- * Notes: the backend always sends note="" and terminated=false today (the
- * while-loop's final failing condition check isn't captured as a step), so
- * notes are synthesized client-side from lineIndex/i instead, and the
- * "Loop terminated" message won't show for real data until the backend
- * captures that final step too.
+ * The backend (BaseRankService.getBaseRankJson) emits lineIndex 0-3 for
+ * every real loop iteration, then one final entry with lineIndex=0 and
+ * terminated=true representing the while-condition check now failing
+ * (previousKnowledgeBase == currentKnowledgeBase). That terminal entry is
+ * special-cased below: unlike every other lineIndex===0 entry (which starts
+ * a brand-new table row for a new iteration), it must NOT push a new row —
+ * it reuses the existing cumulative rows unchanged. This matters because
+ * BaseRankAlgorithmDetail derives R-infinity from the *last real row's*
+ * eiNext (i.e. the previous iteration's computed E[i+1]) — if the terminal
+ * entry pushed its own row instead, that row's eiNext would be empty and
+ * R-infinity would incorrectly render as empty every time.
+ *
+ * The terminal entry's own `i` is a sentinel (the backend sets it to
+ * Integer.MAX_VALUE, not a real rank number), so it's never used directly —
+ * the note below derives the real "i at which the condition failed" from
+ * the last real row instead (that row's i + 1).
  */
 export function buildBaseRankTraceFromApi(
   tracers: ApiBaseRankTracer[]
@@ -60,7 +92,9 @@ export function buildBaseRankTraceFromApi(
   tracers.forEach((tracer) => {
     const { i, lineIndex, rows: r, terminated } = tracer;
 
-    if (lineIndex === 0) {
+    if (terminated) {
+      // While-condition now false — reuse the existing rows as-is.
+    } else if (lineIndex === 0) {
       rows.push({
         i,
         ei: r.ei ?? [],
@@ -79,10 +113,18 @@ export function buildBaseRankTraceFromApi(
       }
     }
 
+    let note: string;
+    if (terminated) {
+      const lastRealI = rows.length > 0 ? rows[rows.length - 1].i + 1 : 0;
+      note = `Check E[${lastRealI - 1}] ≠ E[${lastRealI}] — false. Loop terminates. R∞ = E[${lastRealI}].`;
+    } else {
+      note = noteFor(lineIndex, i);
+    }
+
     steps.push({
       i,
       lineIndex,
-      note: noteFor(lineIndex, i),
+      note,
       rows: rows.map((row) => ({ ...row })),
       terminated: !!terminated,
     });

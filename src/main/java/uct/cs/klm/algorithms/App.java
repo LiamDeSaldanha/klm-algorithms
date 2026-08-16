@@ -45,6 +45,8 @@ public class App {
       config.routes.post("/api/knowledge-base/create-from-file", KnowledgeBaseController::createFileKnowledgeBase);
       // Justification
       config.routes.post("/api/relevant/basic/justification/{queryFormula}", JustificationController::getJustificationTrace);
+      config.routes.post("/api/relevant/basic/trace", ReasonerController::getBasicRelevantJson);
+      config.routes.post("/api/relevant/basic/trace/detailed", ReasonerController::getDetailedRelevantJson);
 
 
       // base-rank

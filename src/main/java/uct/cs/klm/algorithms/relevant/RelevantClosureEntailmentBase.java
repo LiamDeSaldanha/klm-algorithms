@@ -5,12 +5,16 @@ import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tweetyproject.logics.pl.reasoner.SatReasoner;
+import org.tweetyproject.logics.pl.sat.Sat4jSolver;
+import org.tweetyproject.logics.pl.sat.SatSolver;
 import org.tweetyproject.logics.pl.syntax.Implication;
 import org.tweetyproject.logics.pl.syntax.Negation;
 import org.tweetyproject.logics.pl.syntax.PlFormula;
 import uct.cs.klm.algorithms.enums.ReasonerType;
 import uct.cs.klm.algorithms.explanation.IJustificationService;
 
+import uct.cs.klm.algorithms.ranking.BaseRankService;
 import uct.cs.klm.algorithms.ranking.ModelBaseRank;
 import uct.cs.klm.algorithms.models.ModelEntailment;
 import uct.cs.klm.algorithms.models.KnowledgeBase;
@@ -381,45 +385,7 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
 
             _logger.debug(String.format("   Mini := %s", miniKb.getFormulas()));
 
-            /*
-              
-            for (int i = 0; i < justificationCollection.size(); i++) {
 
-                var rank = baseRankCollection.getRank(counter);               
-
-                if (rank == null || counter == Symbols.INFINITY_RANK_NUMBER) {
-                    counter++;
-                    continue;
-                }
-                              
-                var rankdeMaterialised = ReasonerUtils.toMaterialisedKnowledgeBase(rank.getFormulas());
-                var rankNumber = -1;
-                
-                  _logger.debug(String.format("=> Rel Rank %s: %s", counter, rankdeMaterialised));
-
-                for (var formula : justificationCollection.get(i)) {
-
-                    _logger.debug(String.format("=> Rel Formula %s: %s", counter, formula));
-                    
-                    var deMaterialised = ReasonerUtils.toDematerialisedFormula(formula);
-
-                    if (rankdeMaterialised.contains(deMaterialised)) {
-                        if (rankNumber == -1) {
-                            rankNumber = rank.getRankNumber();
-                        }
-
-                        if (rank.getRankNumber() == rankNumber) {
-                            miniKb.add(deMaterialised);
-                        }
-                    }
-                }
-
-                if (rankNumber == -1) {
-                    i = i - 1;
-                    counter++;
-                }
-            }
-             */
         }
 
         ModelRankCollection resultIncosistentRank = new ModelRankCollection();
@@ -492,5 +458,160 @@ public abstract class RelevantClosureEntailmentBase extends KlmReasonerBase {
                 resultIrrelevantRank,
                 relevantKb,
                 justificationCollection);
+    }
+
+    public ModelRelevant getBasicRelevantJson(KnowledgeBase kb,PlFormula query, KnowledgeBase relevant,KnowledgeBase irrelevant){
+        BaseRankService service = new BaseRankService();
+        ModelBaseRank baseRank= service.construct(kb);
+        SatSolver.setDefaultSolver(new Sat4jSolver());
+        SatReasoner reasoner = new SatReasoner();
+
+        ModelRelevant mr = new ModelRelevant();
+        List<RelevantTracer> listRelevantTracer = new ArrayList<>();
+
+        int i =0;
+        KnowledgeBase relevantInf = baseRank.getRanking().getRank(Symbols.INFINITY_RANK_NUMBER).getFormulas();
+        KnowledgeBase relevantPrime = new KnowledgeBase(relevant);
+        // System.out.println("mat: "+relevantInf.materialise());
+        //System.out.println("not mat: "+relevantInf);
+        System.out.println("Entailment check");
+        System.out.println("query negation: "+new Negation(((Implication)query).getFirstFormula()));
+        while(reasoner.query((relevantInf).union(relevantPrime).union(irrelevant),new Negation(((Implication)query).getFirstFormula())) && relevantPrime.size()!=0){
+            RelevantTracer rt = new RelevantTracer();
+            rt.setI(i);
+            rt.setBefore(relevantPrime.getStringFormulas());
+            System.out.println("before: "+relevantPrime);
+            KnowledgeBase intersection = relevant.intersection(baseRank.getRanking().getRank(i).getFormulas());
+            rt.setIntersection(intersection.getStringFormulas());
+            System.out.println("intersection: "+"at "+i+" set: "+intersection);
+            relevantPrime = relevantPrime.difference(intersection);
+            rt.setCurrent(relevantPrime.getStringFormulas());
+            System.out.println("after: "+relevantPrime);
+            listRelevantTracer.add(rt);
+            i+=1;
+        }
+        mr.setSteps(listRelevantTracer);
+
+        System.out.println("final KB: "+(relevantInf).union(relevantPrime).union(irrelevant));
+        boolean entailment = reasoner.query((relevantInf).union(relevantPrime).union(irrelevant),query);
+        mr.setEntailment(entailment);
+        return mr;
+
+
+    }
+
+    /**
+     * Same computation as getBasicRelevantJson, but every pseudocode line is
+     * pushed as its own RelevantTracer step (lineIndex 0-4), so the frontend
+     * can step through the algorithm line-by-line instead of just seeing one
+     * snapshot per rank. Line numbering:
+     *   0: evaluate the while-condition for the current rank i
+     *   1: intersection := R+ ∩ Rank(i)
+     *   2: R' := R' \ intersection
+     *   3: i := i + 1
+     *   4: terminal — final entailment check
+     */
+    public ModelRelevant getDetailedRelevantJson(
+            KnowledgeBase kb,
+            PlFormula query,
+            KnowledgeBase relevant,
+            KnowledgeBase irrelevant) {
+
+        BaseRankService service = new BaseRankService();
+        ModelBaseRank baseRank = service.construct(kb);
+        SatSolver.setDefaultSolver(new Sat4jSolver());
+        SatReasoner reasoner = new SatReasoner();
+
+        ModelRelevant mr = new ModelRelevant();
+        List<RelevantTracer> listRelevantTracer = new ArrayList<>();
+
+        int i = 0;
+        KnowledgeBase relevantInf = baseRank.getRanking().getRank(Symbols.INFINITY_RANK_NUMBER).getFormulas();
+        KnowledgeBase relevantPrime = new KnowledgeBase(relevant);
+        PlFormula negationOfAntecedent = new Negation(((Implication) query).getFirstFormula());
+
+        System.out.println("[DEBUG] getDetailedRelevantJson: kb=" + kb + " query=" + query);
+        System.out.println("[DEBUG] getDetailedRelevantJson: relevant (R+) input = " + relevant
+                + " (size=" + relevant.size() + ")");
+        System.out.println("[DEBUG] getDetailedRelevantJson: irrelevant (R-) input = " + irrelevant);
+        System.out.println("[DEBUG] getDetailedRelevantJson: relevantInf (R_infinity) = " + relevantInf);
+        System.out.println("[DEBUG] getDetailedRelevantJson: negationOfAntecedent = " + negationOfAntecedent);
+
+        RelevantTracer rt = new RelevantTracer();
+
+        while (true) {
+
+            boolean entailsNegation = reasoner.query(relevantInf.union(relevantPrime).union(irrelevant), negationOfAntecedent);
+            boolean loopCondition = entailsNegation && relevantPrime.size() != 0;
+
+            System.out.println(String.format(
+                    "[DEBUG] i=%d: entailsNegation=%s, relevantPrime.size()=%d, loopCondition=%s",
+                    i, entailsNegation, relevantPrime.size(), loopCondition));
+
+            // Line 0: evaluate the while-condition for this rank.
+            rt.setI(i);
+            rt.setLineIndex(0);
+            rt.setBefore(relevantPrime.getStringFormulas());
+            rt.setTerminated(!loopCondition);
+            rt.setNote(loopCondition
+                    ? String.format("Rank %d: negation of antecedent still entailed and R' is non-empty -> continue.", i)
+                    : "Loop condition false (negation of antecedent no longer entailed, or R' is empty) -> terminate.");
+            listRelevantTracer.add(rt.copy());
+
+            if (!loopCondition) {
+                System.out.println("[DEBUG] i=" + i + ": loop terminating (see loopCondition above).");
+                break;
+            }
+
+            // Line 1: intersect the original relevant set with the current rank.
+            KnowledgeBase intersection = relevant.intersection(baseRank.getRanking().getRank(i).getFormulas());
+            System.out.println("[DEBUG] i=" + i + ": Rank(" + i + ") = "
+                    + baseRank.getRanking().getRank(i).getFormulas() + ", intersection with R+ = " + intersection);
+            rt.setLineIndex(1);
+            rt.setIntersection(intersection.getStringFormulas());
+            rt.setNote(String.format("Rank %d ^ R+ = %s", i, intersection));
+            listRelevantTracer.add(rt.copy());
+
+            // Line 2: remove that intersection from R'.
+            relevantPrime = relevantPrime.difference(intersection);
+            System.out.println("[DEBUG] i=" + i + ": R' after removal = " + relevantPrime);
+            rt.setLineIndex(2);
+            rt.setCurrent(relevantPrime.getStringFormulas());
+            rt.setNote(String.format("R' := R' \\ (Rank %d ^ R+) = %s", i, relevantPrime));
+            listRelevantTracer.add(rt.copy());
+
+            // Line 3: advance to the next rank. The tracer still carries the
+            // OLD i here, matching BaseRankService.getBaseRankJson's
+            // convention (rankNumber++ happens after that method's four
+            // line-pushes too) — the new i only becomes "current" once the
+            // next while-condition check (line 0) actually runs. Stamping
+            // the tracer with the incremented value here would make the
+            // Algorithm badge jump to i+1 one step before the Result table
+            // has any row for it.
+            rt.setLineIndex(3);
+            rt.setNote(String.format("i := %d", i + 1));
+            listRelevantTracer.add(rt.copy());
+            i += 1;
+        }
+
+        // Line 4 (terminal): entailment check on the full remaining knowledge base.
+        KnowledgeBase finalKb = relevantInf.union(relevantPrime).union(irrelevant);
+        boolean entailment = reasoner.query(finalKb, query);
+
+        rt.setLineIndex(4);
+        rt.setTerminated(true);
+        rt.setCurrent(relevantPrime.getStringFormulas());
+        rt.setNote(String.format("Final KB := %s -> entailed(%s) = %s", finalKb, query, entailment));
+        listRelevantTracer.add(rt.copy());
+
+        mr.setSteps(listRelevantTracer);
+        mr.setRelevant(relevant.getStringFormulas());
+        mr.setIrrelevant(irrelevant.getStringFormulas());
+        mr.setEntailment(entailment);
+
+        System.out.println("[DEBUG] getDetailedRelevantJson: finished, " + listRelevantTracer.size()
+                + " total step(s), final i=" + i + ", entailed=" + entailment);
+
+        return mr;
     }
 }

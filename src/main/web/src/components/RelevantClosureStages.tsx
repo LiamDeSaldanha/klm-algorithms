@@ -55,25 +55,23 @@ export function RelevantClosureStages({
 
   return (
     <Card className="w-full">
-      <CardHeader className="text-center text-l">
-        <CardTitle className="text-center text-2xl font-bold">
+      <CardHeader className="p-4 pb-2 text-center text-l">
+        <CardTitle className="text-center text-xl font-bold">
           {STAGE_TITLES[currentStage]}
         </CardTitle>
-
-
       </CardHeader>
-      <CardContent className="text-center h-72 overflow-y-auto">
+      <CardContent className="min-h-[22rem] p-4 pt-0 text-center">
        {entailment && currentStage === "partition" && (
-                <div>
-                <p className="text-sm">
-                                 Relevant Closure splits a defeasible knowledge base into relevant and irrelevant statment's
-                                 in relation to the query. The relevant partition is defined as the union of all Justifications and the
-                                 irrelevant partition is the remaining defeasible statements in the knowledge base. A Justification is the smallest set
-                                 where the antecedent of a query is exceptional. A justification is mathematically defined as:</p>
+                <div className="mx-auto mb-3 max-w-2xl space-y-1 text-xs ">
+                <p>
+                                 Relevant Closure splits a defeasible knowledge base into relevant and irrelevant statements
+                                 in relation to the query. The relevant partition is the union of all justifications; the
+                                 irrelevant partition is everything else. A justification is the smallest subset where the
+                                 antecedent of the query is exceptional:</p>
                                  <Formula formula={`\\text{Given knwoledge base }\\mathcal{K} \\text{ and a propositional statement } \\alpha\\text{. Let }\\mathcal{J}\\subset\\mathcal{K}`} />
                                  <Formula formula={`\\mathcal{J}\\text{ is a }\\alpha \\text{ justification wrt }\\mathcal{K}\\text{ if }\\alpha \\text{ is exceptional in } \\mathcal{J} \\text{ and for any } \\mathcal{J}'\\subset \\mathcal{J} \\text{ }\\alpha \\text{ is not exceptional}`} />
 
-                                 <p className="text-sm"> For basic relevant closure the partition is defined mathematically as:
+                                 <p>For basic relevant closure the partition is defined mathematically as:
                                  </p>
                                  <Formula formula={`\\mathcal{J}^{\\mathcal{K}}_{\\text{basic}}(\\alpha) = \\{\\mathcal{J} | \\mathcal{J} \\text{ is an }\\alpha \\text{ justification w.r.t }\\mathcal{K}\\}`} />
 
@@ -81,7 +79,7 @@ export function RelevantClosureStages({
 
                 )}
 
-        <div className="flex min-h-full flex-col items-center justify-center">
+        <div className="flex flex-col items-center">
           {!entailment && <NoResults />}
 
           {entailment && currentStage === "partition" && (
@@ -100,8 +98,8 @@ export function RelevantClosureStages({
           )}
 
           {entailment && currentStage === "relevant-closure" && (
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="space-y-2 text-center">
+              <p className="text-xs text-muted-foreground">
                 Checking whether the refined knowledge base entails the query.
               </p>
               <EntailResult
@@ -112,7 +110,7 @@ export function RelevantClosureStages({
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex items-center justify-center gap-4">
+      <CardFooter className="flex items-center justify-center gap-4 p-3 pt-0">
         <Button
           variant="outline"
           size="icon"

@@ -1,14 +1,32 @@
-import type { JustificationTraceStep } from "@/lib/mock/justification-trace";
+/**
+ * Shape of a step in the justification search that PartitionJustificationDetail.tsx
+ * renders — one entry per powerset candidate subset tested.
+ */
+export interface JustificationTraceStep {
+  /** 1-based index of this candidate subset in the powerset enumeration. */
+  candidateNumber: number;
+  /** The candidate subset of defeasible statements being tested. */
+  candidate: string[];
+  /** candidate combined with the classical background statements. */
+  combinedKb: string[];
+  /** Whether combinedKb entails the negation of the antecedent. */
+  entailed: boolean;
+  /** Only meaningful when entailed — is this candidate a minimal justification? */
+  isMinimal: boolean | null;
+  /** Justifications confirmed so far, in the order they were found. */
+  justificationsSoFar: string[][];
+  note: string;
+}
 
 /**
  * Shape actually returned by POST /api/relevant/basic/justification/{queryFormula}
  * — field names match the JSON keys Jackson produces from
  * ModelJustificationTraceStep's getters, which don't exactly match the
- * mock/spec's JustificationTraceStep interface:
+ * JustificationTraceStep interface above:
  *
  * - `isMinimal()` decapitalizes to property "minimal", not "isMinimal".
  * - `getJustificationSoFar()` decapitalizes to "justificationSoFar"
- *   (singular), not the mock's "justificationsSoFar" (plural).
+ *   (singular), not this file's "justificationsSoFar" (plural).
  *
  * (Same kind of getter-name gotcha as ApiBaseRankResults in
  * lib/base-rank-trace.ts — see that file's comment.)
@@ -34,9 +52,7 @@ export interface ApiJustificationTraceStep {
 
 /**
  * Converts the raw API response into the JustificationTraceStep[] shape
- * PartitionJustificationDetail.tsx already renders (same shape
- * MOCK_JUSTIFICATION_TRACE produces), so the component doesn't need to
- * change — only its data source does.
+ * PartitionJustificationDetail.tsx renders.
  *
  * `isMinimal` is reconstructed as null when the step wasn't entailed, since
  * the backend's `minimal` field is a Java primitive boolean (always false

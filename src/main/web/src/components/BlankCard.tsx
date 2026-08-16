@@ -41,17 +41,17 @@ export function BlankCard({
         className
       )}
     >
-      <CardHeader className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 space-y-0">
+      <CardHeader className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 space-y-0 p-2.5">
         <span />
         {title ? (
-          <span className="text-center text-sm font-semibold">{title}</span>
+          <span className="text-center text-xs font-semibold">{title}</span>
         ) : (
           <span />
         )}
-        <div className="flex items-center justify-self-end gap-2">
+        <div className="flex items-center justify-self-end gap-1.5">
           {showToggle && (
             <>
-              <Label htmlFor={inputId} className="text-xs text-muted-foreground">
+              <Label htmlFor={inputId} className="text-[10px] text-muted-foreground">
                 Highlight
               </Label>
               <Switch
@@ -63,7 +63,7 @@ export function BlankCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="text-center">{children}</CardContent>
+      <CardContent className="text-center p-2.5 pt-0">{children}</CardContent>
     </Card>
   );
 }

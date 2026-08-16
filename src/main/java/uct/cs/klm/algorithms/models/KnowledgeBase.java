@@ -68,7 +68,17 @@ public class KnowledgeBase extends PlBeliefSet {
      public void addKnowledgeBase(List<PlFormula> formulas) {
         this.addAll(formulas);
     }
-
+    /**
+     * Computes the union of this knowledge base and other knowledge base.
+     *
+     * @param knowledgeBase Other knowledge base.
+     * @return Knowledge base representing the union.
+     */
+    public KnowledgeBase union(KnowledgeBase knowledgeBase) {
+        KnowledgeBase result = new KnowledgeBase(this);
+        result.addAll(knowledgeBase);
+        return result;
+    }
     /**
      * Computes union of this knowledge base with a collection of other
      * knowledge bases.

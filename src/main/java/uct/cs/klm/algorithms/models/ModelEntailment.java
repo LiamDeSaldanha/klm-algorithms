@@ -173,6 +173,10 @@ public abstract class ModelEntailment {
         _remainingRanking = remainingRanking;
     }
 
+    public void setRelevantRanking(ModelRankCollection relevantRanking) {
+        _relevantRanking = relevantRanking;
+    }
+
     public void setEntailmentKnowledgeBase(KnowledgeBase entailmentKnowledgeBase) {
         _entailmentKnowledgeBase = entailmentKnowledgeBase;
     }

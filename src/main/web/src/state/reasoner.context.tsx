@@ -22,6 +22,7 @@ import { useRouteQueryType } from "@/hooks/use-route-query-type";
 import { ErrorModel } from "@/lib/models";
 import { buildBaseRankTraceFromApi } from "@/lib/base-rank-trace";
 import { buildJustificationTraceFromApi } from "@/lib/justification-trace";
+import { buildRelevantClosureTraceFromApi } from "@/lib/relevant-closure-trace";
 
 interface ReasonerContextValue extends ReasonerState {
   dispatch: React.Dispatch<ReasonerAction>;
@@ -191,6 +192,85 @@ export const ReasonerProvider = ({ children }: { children: ReactNode }) => {
               ? null
               : await api.fetchRationalExplanation(rationalEntailment);
 
+          // Detailed relevant closure trace (one step per pseudocode line) —
+          // same resilience pattern as baseRankTrace/justificationTrace
+          // above: fetched per-algorithm from its already-computed relevant /
+          // irrelevant partition, and never allowed to block the rest of the
+          // entailment result if it fails.
+          let basicRelevantClosureTrace = null;
+          if (basicRelevantEntailment) {
+            const relevantFormulas = basicRelevantEntailment.relevantRanking.flatMap(
+              (rank) => rank.formulas
+            );
+            const irrelevantFormulas = basicRelevantEntailment.irrelevantRanking.flatMap(
+              (rank) => rank.formulas
+            );
+            console.log(
+              "[DEBUG] basicRelevantClosureTrace — relevant (R+) formulas being sent:",
+              relevantFormulas,
+              "irrelevant (R-) formulas being sent:",
+              irrelevantFormulas
+            );
+            try {
+              const rawTrace = await api.fetchRelevantClosureDetailedTrace(
+                basicRelevantEntailment.knowledgeBase,
+                basicRelevantEntailment.queryFormula,
+                relevantFormulas,
+                irrelevantFormulas
+              );
+              basicRelevantClosureTrace = buildRelevantClosureTraceFromApi(
+                rawTrace.steps
+              );
+              console.log(
+                "[DEBUG] basicRelevantClosureTrace — resolved to " +
+                  basicRelevantClosureTrace.length +
+                  " step(s)"
+              );
+            } catch (error) {
+              console.error(
+                "Basic relevant closure trace fetch failed:",
+                error
+              );
+            }
+          }
+
+          let minimalRelevantClosureTrace = null;
+          if (minimalRelevantEntailment) {
+            const relevantFormulas = minimalRelevantEntailment.relevantRanking.flatMap(
+              (rank) => rank.formulas
+            );
+            const irrelevantFormulas = minimalRelevantEntailment.irrelevantRanking.flatMap(
+              (rank) => rank.formulas
+            );
+            console.log(
+              "[DEBUG] minimalRelevantClosureTrace — relevant (R+) formulas being sent:",
+              relevantFormulas,
+              "irrelevant (R-) formulas being sent:",
+              irrelevantFormulas
+            );
+            try {
+              const rawTrace = await api.fetchRelevantClosureDetailedTrace(
+                minimalRelevantEntailment.knowledgeBase,
+                minimalRelevantEntailment.queryFormula,
+                relevantFormulas,
+                irrelevantFormulas
+              );
+              minimalRelevantClosureTrace = buildRelevantClosureTraceFromApi(
+                rawTrace.steps
+              );
+              console.log(
+                "[DEBUG] minimalRelevantClosureTrace — resolved to " +
+                  minimalRelevantClosureTrace.length +
+                  " step(s)"
+              );
+            } catch (error) {
+              console.error(
+                "Minimal relevant closure trace fetch failed:",
+                error
+              );
+            }
+          }
+
           const data = {
             inferenceOperators,
             baseRank,
@@ -201,6 +281,8 @@ export const ReasonerProvider = ({ children }: { children: ReactNode }) => {
             lexicalEntailment,
             basicRelevantEntailment,
             minimalRelevantEntailment,
+            basicRelevantClosureTrace,
+            minimalRelevantClosureTrace,
             rationalExplanation,
           };
 

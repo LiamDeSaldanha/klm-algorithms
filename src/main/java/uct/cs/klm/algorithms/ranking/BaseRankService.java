@@ -247,12 +247,7 @@ public final class BaseRankService implements IBaseRankService {
 
              rankNumber++;
          }
-         try {
-             ObjectMapper mapper = new ObjectMapper();
-             System.out.println(mapper.writeValueAsString(brtList));
-         }catch (Exception e){
-             System.out.println("oopsie");
-         }
+
          for(BaseRankTracer brt:brtList){
              try {
                  System.out.println(brt.toJson());
@@ -264,6 +259,24 @@ public final class BaseRankService implements IBaseRankService {
          baseRanking.addRank(
                  Symbols.INFINITY_RANK_NUMBER,
                  ReasonerUtils.toCombinedKnowledgeBases(classicalStatements, currentKnowledgeBase));
+
+         // Terminal step: the while-condition line (index 0) evaluated false —
+         // previousKnowledgeBase now equals currentKnowledgeBase, so the loop
+         // exited. Reuses that final stabilized state rather than fabricating
+         // a separate R-infinity entry, so the frontend can derive R-infinity
+         // from the last real iteration's E[i+1] instead (see
+         // buildBaseRankTraceFromApi in the frontend, which special-cases
+         // terminated=true to not push a new table row).
+
+         BaseRankResults terminalResults = new BaseRankResults();
+         BaseRankTracer terminalTracer = new BaseRankTracer();
+         terminalResults.set(rankNumber, currentKnowledgeBase, previousKnowledgeBase);
+         terminalTracer.set(rankNumber, 0, "", terminalResults, false);
+         brtList.add(terminalTracer.copy());
+
+         terminalResults.set(Integer.MAX_VALUE, knowledgeBase.separate()[1], new KnowledgeBase());
+         terminalTracer.set(Integer.MAX_VALUE, 0, "", terminalResults, true);
+         brtList.add(terminalTracer.copy());
 
          var finalTime = ReasonerUtils.ToTimeDifference(startTime, System.nanoTime());
 

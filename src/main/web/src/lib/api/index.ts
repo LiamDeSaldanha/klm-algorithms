@@ -13,6 +13,7 @@ import {
 } from "../models";
 import { ApiBaseRankTracer } from "../base-rank-trace";
 import { ApiJustificationTraceStep } from "../justification-trace";
+import { ApiModelRelevant } from "../relevant-closure-trace";
 
 const URL_QUERY_GET_FORMULA = "/api/queries/get-formula";
 const URL_QUERY_POST_CREATE_FORMULA = "/api/queries/create-formula";
@@ -35,6 +36,7 @@ const ENTAILMENT_EXPLANATION_URL = (reasoner: string) => {
 const JUSTIFICATION_TRACE_URL = (queryFormula: string) => {
   return `/api/relevant/basic/justification/${queryFormula}`;
 };
+const RELEVANT_CLOSURE_DETAILED_TRACE_URL = "/api/relevant/basic/trace/detailed";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getError = (error: any) => {
@@ -181,6 +183,45 @@ const fetchJustificationTrace = async (
 
     return response.data as ApiJustificationTraceStep[];
   } catch (error) {
+    throw getError(error);
+  }
+};
+
+const fetchRelevantClosureDetailedTrace = async (
+  knowledgeBase: string[],
+  query: string,
+  relevant: string[],
+  irrelevant: string[]
+) => {
+  try {
+    console.log("[DEBUG] POST " + RELEVANT_CLOSURE_DETAILED_TRACE_URL + " — request payload:", {
+      knowledgeBase,
+      query,
+      relevant,
+      irrelevant,
+    });
+
+    const response = await axios.post(RELEVANT_CLOSURE_DETAILED_TRACE_URL, {
+      knowledgeBase,
+      query,
+      relevant,
+      irrelevant,
+    });
+
+    const data = response.data as ApiModelRelevant;
+    console.log(
+      "[DEBUG] Relevant Closure Detailed Trace Response — " +
+        (data.steps?.length ?? 0) +
+        " step(s):",
+      data
+    );
+
+    return data;
+  } catch (error) {
+    console.error(
+      "[DEBUG] Relevant Closure Detailed Trace Request FAILED:",
+      error
+    );
     throw getError(error);
   }
 };
@@ -388,6 +429,7 @@ export {
   fetchBaseRank,
   fetchBaseRankTrace,
   fetchJustificationTrace,
+  fetchRelevantClosureDetailedTrace,
   fetchBaseRankExplanation,
   fetchRationalEntailment,
   fetchLexicalEntailment,

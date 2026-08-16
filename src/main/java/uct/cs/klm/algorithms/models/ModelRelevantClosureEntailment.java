@@ -30,6 +30,10 @@ public class ModelRelevantClosureEntailment extends ModelEntailment {
         return _irrelevantRanking;
     }
 
+    public void setIrrelevantRanking(ModelRankCollection irrelevantRanking) {
+        _irrelevantRanking = irrelevantRanking;
+    }
+
     public static class ModelRelevantClosureEntailmentBuilder extends ModelEntailment.EntailmentBuilder<ModelRelevantClosureEntailmentBuilder> {      
         private ModelRankCollection _relevantRanking;
         private ModelRankCollection _irrelevantRanking;
