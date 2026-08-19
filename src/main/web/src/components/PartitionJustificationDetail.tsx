@@ -59,7 +59,7 @@ function JustificationExplanation({
 
       {step.entailed && !step.isMinimal && (
         <p>
-          <strong>Although</strong> <Formula formula={"\\mathcal{D} \\models \\lnot " + antecedent} />
+          <strong>Although</strong > <Formula formula={"\\mathcal{D} \\models \\lnot " + antecedent} />
           , there exists a subset of this candidate set where the antecedent is exceptional therefore, this candidate set
           is <strong>not</strong> a justification.
         </p>

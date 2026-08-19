@@ -104,13 +104,7 @@ function RelevantClosureExplanation({
               whether <Formula formula="\mathcal{R}'" /> still has statements
               left in it.
             </p>
-            <p>
-              If both hold, <Formula formula="\mathcal{R}'" /> still contains
-              something responsible for the inconsistency, so we keep
-              refining it. If either fails, we stop — either the
-              inconsistency is gone, or there's nothing left to remove.
-            </p>
-            <p className="text-muted-foreground">{loopStep.note}</p>
+
           </div>
         );
       case 1:
@@ -123,24 +117,15 @@ function RelevantClosureExplanation({
               <Formula formula={`\\mathcal{R}' := \\mathcal{R}' \\setminus \\{\\mathcal{R}_{${currentI}} \\cap \\mathcal{R}'\\}`} />
               .
             </p>
-            <p>
-              Rank <Formula formula={`${currentI}`} /> is the most typical
-              rank not yet considered, so these are the next statements to
-              give up in order to restore consistency with the antecedent.
-            </p>
-            <p className="text-muted-foreground">{loopStep.note}</p>
+
           </div>
         );
       case 2:
         return (
           <div className="space-y-1.5 text-left text-xs">
             <p>
-              <Formula formula="i" /> is incremented so the next iteration
-              considers rank <Formula formula={`${currentI}`} />, moving on to
-              slightly less typical statements if refinement needs to
-              continue.
+              <Formula formula="i" /> is incremented so the next iteration.
             </p>
-            <p className="text-muted-foreground">{loopStep.note}</p>
           </div>
         );
       default:

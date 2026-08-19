@@ -181,7 +181,7 @@ function BaseRankExplanation({
     case "init-i":
       prose = (
         <p>
-          We initialise the iteration counter, <Formula formula="i := 0" />.
+          We initialise the counter, <Formula formula="i := 0" />.
           Nothing has been ranked yet.
         </p>
       );
@@ -190,9 +190,9 @@ function BaseRankExplanation({
       prose = (
         <p>
           We initialise <Formula formula="\mathcal{E}_0" /> to the full
-          defeasible knowledge base <Formula formula="\mathcal{K}" /> —
-          every defeasible statement starts out a candidate for being
-          exceptional.
+          defeasible knowledge base <Formula formula="\mathcal{K}" />. Note that as a definition
+          rank infinity holds the classical formulas and is exceptional at every level thus will be in all exceptioal sets
+
         </p>
       );
       break;
@@ -206,9 +206,9 @@ function BaseRankExplanation({
           <p>
             We re-check the while condition:{" "}
             <Formula formula={`\\mathcal{E}_{${currentI - 1}} \\neq \\mathcal{E}_{${currentI}}`} />
-            . This time it's <strong>false</strong> —{" "}
+            . This time it's <strong>false</strong> {" "}
             <Formula formula={`\\mathcal{E}_{${currentI - 1}} = \\mathcal{E}_{${currentI}}`} />
-            — so the sequence has stabilised and the loop terminates.
+             so the sequence has stabilised and the loop terminates.
           </p>
         );
         break;
@@ -219,7 +219,7 @@ function BaseRankExplanation({
             <p>
               We check whether the exceptional set has changed since the last
               iteration: <Formula formula={`\\mathcal{E}_{${currentI - 1}} \\neq \\mathcal{E}_{${currentI}}`} />
-              . It has, so the loop body runs again for{" "}
+              . It has, so the loop runs again for{" "}
               <Formula formula={`i = ${currentI}`} />.
             </p>
           );
@@ -229,9 +229,7 @@ function BaseRankExplanation({
             <p>
               We compute <Formula formula={`\\mathcal{E}_{${currentI + 1}}`} />
               : the statements in <Formula formula={`\\mathcal{E}_{${currentI}}`} />{" "}
-              whose antecedent is exceptional — i.e. inconsistent with the
-              rest of <Formula formula={`\\mathcal{E}_{${currentI}}`} /> —
-              stay in, everything else drops out. These carry over into the
+              whose antecedent is exceptional , everything else carries over into the
               next iteration.
             </p>
           );
@@ -339,9 +337,7 @@ function BaseRankExplanation({
     <div className="space-y-1.5 text-left text-xs">
       {table}
       {prose}
-      {loopStep?.note && !loopStep.terminated && (
-        <p className="text-muted-foreground">{loopStep.note}</p>
-      )}
+
     </div>
   );
 }
